@@ -1,82 +1,75 @@
-import kagglehub
+import requests
+from bs4 import BeautifulSoup
 import pandas as pd
 import os
+import time
 
-def run_data_pipeline():
-    print("Iniciando Módulo de Pipeline de Dados...")
-    print("Baixando os dados do Kaggle...")
-    try:
-        path = kagglehub.dataset_download("olistbr/brazilian-ecommerce")
-        print(f"Download concluído. Arquivos em: {path}")
-    except Exception as e:
-        print(f"Erro no download: {e}")
-        return
+def run_book_scraper_pipeline():
+    print("Iniciando Módulo de Pipeline de Dados: Extração de books.toscrape.com...")
+    
+    base_url = "http://books.toscrape.com/catalogue/"
+    current_url = "http://books.toscrape.com/catalogue/page-1.html"
+    
+    all_books = []
+    page_count = 1
 
-    print("Carregando datasets principais...")
-    try:
-        orders = pd.read_csv(os.path.join(path, "olist_orders_dataset.csv"))
-        reviews = pd.read_csv(os.path.join(path, "olist_order_reviews_dataset.csv"))
-        order_items = pd.read_csv(os.path.join(path, "olist_order_items_dataset.csv"))
-        products = pd.read_csv(os.path.join(path, "olist_products_dataset.csv"))
-        customers = pd.read_csv(os.path.join(path, "olist_customers_dataset.csv"))
-    except FileNotFoundError as e:
-        print(f"Erro ao carregar arquivo: {e}. Verifique o caminho e o resultado do download.")
-        return
+    while current_url:
+        print(f"Extraindo dados da página {page_count}: {current_url}")
+        
+        try:
+            response = requests.get(current_url)
+            response.raise_for_status()
+        except requests.exceptions.RequestException as e:
+            print(f"Erro ao acessar a página: {e}")
+            break
 
-    # 3. Combinação dos dados (Merge)
-    print("Combinando os datasets...")
-    df = pd.merge(orders, reviews, on="order_id")
-    df = pd.merge(df, order_items, on="order_id")
-    df = pd.merge(df, products, on="product_id")
-    df = pd.merge(df, customers, on="customer_id")
-    
-    # 4. Limpeza e Tratamento dos dados
-    print("Iniciando limpeza e tratamento...")
-    
-    cols_to_use = [
-        'order_id',
-        'review_score',
-        'price',
-        'freight_value',
-        'customer_state',
-        'product_category_name',
-        'order_status',
-        'order_purchase_timestamp',
-        'order_delivered_customer_date'
-    ]
-    df = df[cols_to_use]
+        soup = BeautifulSoup(response.content, 'html.parser')
+        books = soup.find_all('article', class_='product_pod')
 
-    df.dropna(subset=['order_delivered_customer_date', 'product_category_name'], inplace=True)
-    
-    date_cols = ['order_purchase_timestamp', 'order_delivered_customer_date']
-    for col in date_cols:
-        df[col] = pd.to_datetime(df[col], errors='coerce')
-    
-    df['tempo_de_entrega_dias'] = (df['order_delivered_customer_date'] - df['order_purchase_timestamp']).dt.days
+        if not books:
+            print("Nenhum livro encontrado. Fim da extração.")
+            break
 
-    df = df[df['tempo_de_entrega_dias'] >= 0]
-    df.dropna(subset=['tempo_de_entrega_dias'], inplace=True)
-    
-    final_cols = [
-        'review_score',
-        'price',
-        'freight_value',
-        'customer_state',
-        'product_category_name',
-        'tempo_de_entrega_dias'
-    ]
-    df = df[final_cols]
-    
-    output_dir = "output"
-    os.makedirs(output_dir, exist_ok=True)
-    output_path = os.path.join(output_dir, "dados_processados.csv")
-    df.to_csv(output_path, index=False)
-    
-    print("-" * 50)
-    print(f"Pipeline de dados concluído com sucesso!")
-    print(f"Arquivo processado salvo em: {output_path}")
-    print(f"Total de registros no arquivo final: {len(df)}")
-    print("-" * 50)
-    
+        for book in books:
+            title = book.h3.a['title']
+            price_str = book.find('p', class_='price_color').text.strip().replace('£', '')
+            price = float(price_str)
+            
+            rating_map = {'One': 1, 'Two': 2, 'Three': 3, 'Four': 4, 'Five': 5}
+            rating_class = book.find('p', class_='star-rating')['class'][1]
+            rating = rating_map.get(rating_class, 0)
+            
+            category_url = book.h3.a['href']
+            category_response = requests.get(base_url + category_url.replace('../', ''))
+            category_soup = BeautifulSoup(category_response.content, 'html.parser')
+            category = category_soup.find('ul', class_='breadcrumb').find_all('li')[2].a.text.strip()
+            
+            all_books.append({
+                'titulo': title,
+                'preco': price,
+                'nota_avaliacao': rating,
+                'categoria': category
+            })
+
+        next_page_tag = soup.find('li', class_='next')
+        if next_page_tag and next_page_tag.a:
+            current_url = base_url + next_page_tag.a['href']
+            page_count += 1
+            time.sleep(1)
+        else:
+            current_url = None
+
+    if all_books:
+        df = pd.DataFrame(all_books)
+        os.makedirs("output", exist_ok=True)
+        output_path = os.path.join("output", "livros_extraidos.csv")
+        df.to_csv(output_path, index=False)
+        print("-" * 50)
+        print("Extração concluída com sucesso!")
+        print(f"Total de {len(df)} livros extraídos.")
+        print(f"Arquivo salvo em: {output_path}")
+    else:
+        print("Nenhum livro foi extraído.")
+
 if __name__ == "__main__":
-    run_data_pipeline()
+    run_book_scraper_pipeline()
