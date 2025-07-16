@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Preditor de Satisfação do Cliente</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Poppins', sans-serif; }
+        .loader { border: 4px solid #f3f3f3; border-top: 4px solid #3498db; border-radius: 50%; width: 24px; height: 24px; animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body class="bg-slate-100 flex items-center justify-center min-h-screen p-4">
+
+    <main class="bg-white p-8 rounded-2xl shadow-xl w-full max-w-lg transform transition-all">
+        <div class="text-center mb-8">
+            <h1 class="text-3xl font-bold text-slate-800">Preditor de Satisfação</h1>
+            <p class="text-slate-500 mt-2">Insira os dados do pedido para prever se o cliente ficará satisfeito.</p>
+        </div>
+
+        <form id="prediction-form" class="space-y-4">
+            <div>
+                <label for="price" class="block text-sm font-medium text-slate-600 mb-1">Preço (R$)</label>
+                <input type="number" id="price" name="price" step="0.01" required class="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition" placeholder="Ex: 129.90">
+            </div>
+            <div>
+                <label for="freight_value" class="block text-sm font-medium text-slate-600 mb-1">Valor do Frete (R$)</label>
+                <input type="number" id="freight_value" name="freight_value" step="0.01" required class="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition" placeholder="Ex: 22.50">
+            </div>
+            
+            <!-- CAMPO DE ESTADO ATUALIZADO PARA SELECT -->
+            <div>
+                <label for="customer_state" class="block text-sm font-medium text-slate-600 mb-1">Estado do Cliente</label>
+                <select id="customer_state" name="customer_state" required class="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition bg-white">
+                    <option value="" disabled selected>Carregando estados...</option>
+                </select>
+            </div>
+
+            <!-- CAMPO DE CATEGORIA ATUALIZADO PARA SELECT -->
+            <div>
+                <label for="product_category_name" class="block text-sm font-medium text-slate-600 mb-1">Categoria do Produto</label>
+                <select id="product_category_name" name="product_category_name" required class="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition bg-white">
+                    <option value="" disabled selected>Carregando categorias...</option>
+                </select>
+            </div>
+            
+            <div>
+                <label for="tempo_de_entrega_dias" class="block text-sm font-medium text-slate-600 mb-1">Tempo de Entrega (dias)</label>
+                <input type="number" id="tempo_de_entrega_dias" name="tempo_de_entrega_dias" required class="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition" placeholder="Ex: 10">
+            </div>
+            
+            <button type="submit" id="submit-button" class="w-full bg-blue-600 text-white p-4 rounded-lg font-semibold text-lg hover:bg-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-300 transition-all duration-300 flex items-center justify-center space-x-2">
+                <span id="button-text">Prever Satisfação</span>
+                <div id="loader" class="loader hidden"></div>
+            </button>
+        </form>
+
+        <div id="result-container" class="mt-8 hidden">
+            <div id="result-card" class="p-6 rounded-lg border-l-8">
+                <h2 id="result-title" class="text-2xl font-bold"></h2>
+                <p id="result-description" class="mt-1 text-lg"></p>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        const form = document.getElementById('prediction-form');
+        const submitButton = document.getElementById('submit-button');
+        const buttonText = document.getElementById('button-text');
+        const loader = document.getElementById('loader');
+        const resultContainer = document.getElementById('result-container');
+        const resultCard = document.getElementById('result-card');
+        const resultTitle = document.getElementById('result-title');
+        const resultDescription = document.getElementById('result-description');
+        
+        // --- NOVO SCRIPT PARA CARREGAR OS DROPDOWNS ---
+        // Executa assim que o conteúdo da página estiver pronto
+        document.addEventListener('DOMContentLoaded', async function() {
+            const stateSelect = document.getElementById('customer_state');
+            const categorySelect = document.getElementById('product_category_name');
+
+            try {
+                // Busca as opções na nossa API
+                const response = await fetch('http://127.0.0.1:8000/options');
+                if (!response.ok) {
+                    throw new Error('Falha ao carregar opções da API.');
+                }
+                const options = await response.json();
+
+                // Preenche o dropdown de estados
+                stateSelect.innerHTML = '<option value="" disabled selected>Selecione um estado</option>';
+                options.states.forEach(state => {
+                    const option = document.createElement('option');
+                    option.value = state;
+                    option.textContent = state;
+                    stateSelect.appendChild(option);
+                });
+
+                // Preenche o dropdown de categorias
+                categorySelect.innerHTML = '<option value="" disabled selected>Selecione uma categoria</option>';
+                options.categories.forEach(category => {
+                    const option = document.createElement('option');
+                    option.value = category;
+                    option.textContent = category.replace(/_/g, ' '); // Melhora a legibilidade
+                    categorySelect.appendChild(option);
+                });
+
+            } catch (error) {
+                console.error(error);
+                stateSelect.innerHTML = '<option value="" disabled selected>Erro ao carregar</option>';
+                categorySelect.innerHTML = '<option value="" disabled selected>Erro ao carregar</option>';
+            }
+        });
+
+
+        form.addEventListener('submit', async function(event) {
+            event.preventDefault();
+            const formData = new FormData(form);
+            const data = Object.fromEntries(formData.entries());
+            data.price = parseFloat(data.price);
+            data.freight_value = parseFloat(data.freight_value);
+            data.tempo_de_entrega_dias = parseInt(data.tempo_de_entrega_dias);
+
+            buttonText.textContent = 'Processando...';
+            loader.classList.remove('hidden');
+            submitButton.disabled = true;
+            resultContainer.classList.add('hidden');
+
+            try {
+                const response = await fetch('http://127.0.0.1:8000/predict', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.detail || 'Ocorreu um erro na API.');
+                }
+                const result = await response.json();
+                displayResult(result);
+            } catch (error) {
+                displayError(error.message);
+            } finally {
+                buttonText.textContent = 'Prever Satisfação';
+                loader.classList.add('hidden');
+                submitButton.disabled = false;
+            }
+        });
+
+        function displayResult(result) {
+            resultContainer.classList.remove('hidden');
+            if (result.previsao === 'Satisfeito') {
+                resultCard.className = 'p-6 rounded-lg border-l-8 bg-green-50 border-green-500';
+                resultTitle.className = 'text-2xl font-bold text-green-800';
+                resultTitle.textContent = 'Cliente Satisfeito';
+                resultDescription.className = 'mt-1 text-lg text-green-700';
+                resultDescription.textContent = `O modelo prevê que o cliente provavelmente ficará satisfeito (Classe ${result.classe_predita}).`;
+            } else {
+                resultCard.className = 'p-6 rounded-lg border-l-8 bg-red-50 border-red-500';
+                resultTitle.className = 'text-2xl font-bold text-red-800';
+                resultTitle.textContent = 'Cliente Insatisfeito';
+                resultDescription.className = 'mt-1 text-lg text-red-700';
+                resultDescription.textContent = `O modelo prevê um risco de insatisfação (Classe ${result.classe_predita}).`;
+            }
+        }
+
+        function displayError(message) {
+            resultContainer.classList.remove('hidden');
+            resultCard.className = 'p-6 rounded-lg border-l-8 bg-yellow-50 border-yellow-500';
+            resultTitle.className = 'text-2xl font-bold text-yellow-800';
+            resultTitle.textContent = 'Erro na Predição';
+            resultDescription.className = 'mt-1 text-lg text-yellow-700';
+            resultDescription.textContent = `Detalhes: ${message}`;
+        }
+    </script>
+</body>
+</html>
