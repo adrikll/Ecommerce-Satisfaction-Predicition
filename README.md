@@ -1,6 +1,6 @@
 🤖 Preditor de Satisfação de Clientes de E-commerce
 
-Um projeto completo de Data Science que constrói e implanta um modelo de Machine Learning para prever a satisfação de clientes, servido através de uma API interativa com interface web.
+Um projeto completo que constrói e implanta um modelo de Machine Learning para prever a satisfação de clientes, servido através de uma API interativa com interface web.
 
 Status do Projeto: Concluído ✅
 
@@ -8,68 +8,71 @@ A interface web permite que o utilizador insira dados de um pedido e receba uma 
 
 📝 Visão Geral do Projeto
 
-Este projeto aborda um problema de negócio crucial para qualquer e-commerce: a capacidade de prever proativamente a insatisfação do cliente. Utilizando o dataset público de E-commerce da Olist (https://www.kaggle.com/datasets/olistbr/brazilian-ecommerce), foi desenvolvido um pipeline completo que abrange desde a limpeza e tratamento dos dados brutos até o treino, avaliação e implantação de um modelo de classificação.
+Este projeto aborda um problema de negócio crucial para qualquer e-commerce: a capacidade de prever proativamente a insatisfação do cliente. Utilizando o dataset público de E-commerce da Olist, foi desenvolvido um pipeline completo que abrange desde a limpeza dos dados brutos até o treino e implantação de um modelo de classificação.
 
-O objetivo final não é apenas criar um modelo preciso, mas também disponibilizá-lo como uma ferramenta prática e acessível através de uma API RESTful e uma interface de utilizador simples e intuitiva.
+O projeto evoluiu para incorporar técnicas avançadas como Processamento de Linguagem Natural (NLP) e reamostragem (SMOTE) para resolver o desafio do desbalanceamento de classes, focando em maximizar a deteção de clientes em risco. O objetivo final é disponibilizar uma ferramenta prática e precisa através de uma API RESTful e uma interface de utilizador intuitiva.
 
 ✨ Funcionalidades
 
-Pipeline de Dados Automatizado: Um script (Pipeline_dados.py) que extrai, limpa, transforma e prepara os dados para modelagem.
+    Pipeline de Dados Automatizado: Um script (Pipeline_dados.py) que extrai, limpa, transforma e prepara os dados para modelagem.
 
-Experimentação e Seleção de Modelos: Um segundo pipeline (Pipeline_modelos.py) que treina múltiplos modelos candidatos (Regressão Logística, Random Forest, LightGBM, XGBoost), seleciona o "campeão" com base na performance e o salva como um ficheiro binário (.joblib).
+    Engenharia de Atributos Avançada com NLP: O pipeline de dados foi aprimorado para incluir e processar os comentários de texto das avaliações, transformando-os em features valiosas para o modelo.
 
-Reenquadramento do Problema: Transformação do problema de classificação de 5 classes (notas 1-5) para um problema binário (Satisfeito vs. Insatisfeito), resultando num modelo mais robusto e com maior valor de negócio.
+    Tratamento de Desbalanceamento com SMOTE: Implementação da técnica de reamostragem SMOTE para criar um conjunto de treino mais balanceado, melhorando drasticamente a capacidade do modelo de identificar a classe minoritária (clientes insatisfeitos).
 
-API RESTful com FastAPI: Um serviço de API (servico_api.py) que carrega o modelo treinado e expõe um endpoint /predict para realizar previsões.
+    Experimentação e Seleção de Modelos por F1-Score: Um pipeline (Pipeline_modelos.py) que treina múltiplos modelos, mas seleciona o "campeão" com base no F1-Score, uma métrica mais robusta que a acurácia para este tipo de problema.
 
-Interface Web Interativa: Uma página index.html moderna e responsiva que serve como frontend para a API, permitindo a interação com o modelo de forma visual e amigável, com menus de seleção (dropdowns) preenchidos dinamicamente.
+    API RESTful com FastAPI: Um serviço de API (servico_api.py) que carrega o modelo treinado e expõe endpoints para realizar previsões e popular a interface.
 
-Execução Simplificada: A API foi configurada para servir a interface web e abrir o navegador automaticamente na inicialização, proporcionando uma experiência de utilizador fluida.
+    Interface Web Interativa: Uma página index.html moderna que serve como frontend para a API, com menus de seleção preenchidos dinamicamente.
+
+    Execução Simplificada: A API foi configurada para servir a interface e abrir o navegador automaticamente na inicialização.
 
 🛠️ Tecnologias Utilizadas
 
-Linguagem: Python 3
+    Linguagem: Python 3
 
-Manipulação de Dados: Pandas, KaggleHub
+    Manipulação de Dados: Pandas, KaggleHub
 
-Machine Learning: Scikit-learn, XGBoost, LightGBM
+    Machine Learning: Scikit-learn, XGBoost, LightGBM, Imbalanced-learn (para SMOTE)
 
-API e Servidor Web: FastAPI, Uvicorn
+    API e Servidor Web: FastAPI, Uvicorn
 
-Frontend: HTML5, Tailwind CSS, JavaScript
+    Frontend: HTML5, Tailwind CSS, JavaScript
 
-Serialização de Modelos: Joblib
+    Serialização de Modelos: Joblib
 
-Visualização de Dados: Matplotlib, Seaborn
+    Visualização de Dados: Matplotlib, Seaborn
 
 🚀 Configuração e Instalação
 
 Siga os passos abaixo para configurar e executar o projeto no seu ambiente local.
+Pré-requisitos:
 
-Pré-requisitos
+    Python 3.8 ou superior
 
-Python 3.8 ou superior
+    pip e venv (geralmente incluídos com o Python)
 
-pip e venv (geralmente incluídos com o Python)
+    Visual Studio Code
 
 Passos
 
     Clone o Repositório (se estiver no Git)
 
-    git clone https://github.com/seu-usuario/seu-repositorio.git
-    cd seu-repositorio
+    git clone https://github.com/VitNog21/PipelineESI
+    cd PipelineESI
 
-    Se não estiver a usar Git, apenas certifique-se de que todos os ficheiros do projeto estão na mesma pasta.
+    Se não estiver usando Git, apenas certifique-se de que todos os ficheiros do projeto estão na mesma pasta.
 
     Crie e Ative um Ambiente Virtual
-    Criar o ambiente virtual
 
+    # Criar o ambiente virtual
     python -m venv venv
-    Ativar no Windows (PowerShell)
 
+    # Ativar no Windows (PowerShell)
     .\venv\Scripts\Activate.ps1
-    Ativar no macOS/Linux
 
+    # Ativar no macOS/Linux
     source venv/bin/activate
 
     Instale as Dependências
@@ -79,30 +82,45 @@ Passos
 
 ▶️ Como Executar o Projeto
 
-A execução deve seguir uma ordem específica, pois cada passo depende do anterior.
+É crucial que os scripts sejam executados na ordem correta, pois cada passo gera os ficheiros necessários para o próximo.
+Opção 1: Usando o Debugger do VS Code (Recomendado)
 
-    Executar o Pipeline de Dados
+Esta é a forma mais prática e integrada. Com o ficheiro .vscode/launch.json configurado, pode executar cada etapa com um clique.
 
-Este passo irá descarregar os dados do Kaggle, processá-los e criar o ficheiro output/dados_processados.csv.
+    Abra a aba de Execução e Depuração:
 
-python Pipeline_dados.py
+        Clique no ícone de "Executar e Depurar" na barra lateral esquerda do VS Code (ou pressione Ctrl+Shift+D).
 
-    Executar o Pipeline de Modelagem
+    Selecione e Execute as Configurações na Ordem Correta:
+    No topo da barra lateral, use o menu de seleção para executar cada configuração na seguinte ordem, clicando no botão verde de "play" (▶️):
 
-Este passo irá carregar os dados processados, treinar os modelos, selecionar o campeão e criar o ficheiro output/modelo_campeao.joblib.
+        1. Executar Pipeline de Dados
 
-python Pipeline_modelos.py
+        2. Executar Pipeline de Modelagem
 
-    Iniciar o Serviço da API e a Interface
+        3. Iniciar API e Interface
 
-Este é o passo final. Ele irá iniciar o servidor web, que carregará o modelo e abrirá a interface no seu navegador automaticamente.
+Opção 2: Usando o Terminal Manualmente
 
-uvicorn servico_api:app --reload
+Se preferir não usar o debugger do VS Code, pode executar os comandos diretamente no terminal integrado (com o ambiente virtual ativo).
 
-Após executar o comando, o seu navegador abrirá em http://127.0.0.1:8000, e poderá começar a fazer previsões!
+    Execute o Pipeline de Dados:
+
+    python Pipeline_dados.py
+
+    Execute o Pipeline de Modelagem:
+
+    python Pipeline_modelos.py
+
+    Inicie o Serviço da API e a Interface:
+
+    uvicorn servico_api:app --reload
+
+    (O seu navegador abrirá automaticamente)
+
 
 👨‍💻 Autores
 
 Victor Gabriel e Adriane Kelle
 
-Este projeto foi desenvolvido como uma demonstração completa de um ciclo de vida de um projeto de Machine Learning, desde a conceção até à implantação.
+Este projeto foi desenvolvido como uma demonstração completa de um ciclo de vida de um projeto de Machine Learning, desde a conceção até à implantação e otimização.

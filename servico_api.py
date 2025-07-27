@@ -4,19 +4,19 @@ import pandas as pd
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field
 import webbrowser
-from fastapi.responses import FileResponse, JSONResponse # <- JSONResponse adicionado
+from fastapi.responses import FileResponse, JSONResponse 
 
 # --------------------------------------------------------------------------
-# 1. INICIALIZAÇÃO DA API (sem alterações)
+# 1. INICIALIZAÇÃO DA API 
 # --------------------------------------------------------------------------
 app = FastAPI(
     title="API de Predição de Satisfação do Cliente",
     description="Serviço que utiliza um modelo de Machine Learning para prever a satisfação do cliente.",
-    version="2.2.0" # Nova versão com dropdowns dinâmicos
+    version="2.2.1" # Versão com correção de bug
 )
 
 # --------------------------------------------------------------------------
-# Função para abrir o navegador (sem alterações)
+# Função para abrir o navegador 
 # --------------------------------------------------------------------------
 @app.on_event("startup")
 def open_browser_on_startup():
@@ -26,7 +26,7 @@ def open_browser_on_startup():
         print(f"Não foi possível abrir o navegador automaticamente: {e}")
 
 # --------------------------------------------------------------------------
-# 2. CARREGAMENTO DO MODELO (sem alterações)
+# 2. CARREGAMENTO DO MODELO 
 # --------------------------------------------------------------------------
 try:
     model = joblib.load("output/modelo_campeao.joblib")
@@ -39,7 +39,7 @@ except Exception as e:
     model = None
 
 # --------------------------------------------------------------------------
-# 3. DEFINIÇÃO DOS MODELOS DE DADOS (sem alterações)
+# 3. DEFINIÇÃO DOS MODELOS DE DADOS 
 # --------------------------------------------------------------------------
 class OrderFeatures(BaseModel):
     price: float = Field(..., example=129.90)
@@ -61,7 +61,6 @@ def read_root():
     """Serve a interface do usuário (arquivo index.html)."""
     return FileResponse('index.html')
 
-# --- NOVO ENDPOINT PARA FORNECER AS OPÇÕES DOS DROPDOWNS ---
 @app.get("/options")
 def get_options():
     """
@@ -69,10 +68,7 @@ def get_options():
     e categorias de produtos para preencher os dropdowns da interface.
     """
     try:
-        # Carrega o dataset para extrair as opções
         df = pd.read_csv("output/dados_processados.csv")
-        
-        # Obtém listas de valores únicos e as ordena alfabeticamente
         states = sorted(list(df['customer_state'].unique()))
         categories = sorted(list(df['product_category_name'].unique()))
         
@@ -95,6 +91,7 @@ def predict(features: OrderFeatures):
         raise HTTPException(status_code=503, detail="Modelo não está disponível.")
     try:
         input_data = pd.DataFrame([features.dict()])
+        input_data['review_comment_message'] = ''       
         prediction_class = model.predict(input_data)[0]
         prediction_label = "Satisfeito" if prediction_class == 1 else "Insatisfeito"
         return PredictionOut(classe_predita=int(prediction_class), previsao=prediction_label)
