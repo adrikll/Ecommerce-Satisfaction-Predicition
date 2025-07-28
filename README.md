@@ -1,4 +1,4 @@
-*Preditor de Satisfação de Clientes de E-commerce*
+## *Preditor de Satisfação de Clientes de E-commerce*
 
 Este projeto consiste em um sistema de Machine Learning (ML) desenvolvido para **prever a satisfação do cliente** de uma plataforma de e-commerce (Olist), utilizando dados de pedidos, produtos, clientes e, crucialmente, o **conteúdo dos comentários das avaliações**. O objetivo é identificar proativamente clientes insatisfeitos, permitindo intervenções e melhorias no serviço.
 
