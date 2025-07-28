@@ -1,126 +1,93 @@
-🤖 Preditor de Satisfação de Clientes de E-commerce
+*Preditor de Satisfação de Clientes de E-commerce*
 
-Um projeto completo que constrói e implanta um modelo de Machine Learning para prever a satisfação de clientes, servido através de uma API interativa com interface web.
+Este projeto consiste em um sistema de Machine Learning (ML) desenvolvido para **prever a satisfação do cliente** de uma plataforma de e-commerce (Olist), utilizando dados de pedidos, produtos, clientes e, crucialmente, o **conteúdo dos comentários das avaliações**. O objetivo é identificar proativamente clientes insatisfeitos, permitindo intervenções e melhorias no serviço.
 
-Status do Projeto: Concluído ✅
+O projeto é modularizado em três pipelines principais:
 
-A interface web permite que o utilizador insira dados de um pedido e receba uma previsão de satisfação em tempo real.
+1.  **Pipeline de Dados:** Extração, limpeza e transformação dos dados brutos.
+2.  **Pipeline de Modelos:** Treinamento, avaliação e seleção do melhor modelo de ML.
+3.  **Pipeline de Serviço:** Publica o modelo campeão como uma API, tornando-o acessível para predições em tempo real.
 
-📝 Visão Geral do Projeto
+## Origem dos Dados
 
-Este projeto aborda um problema de negócio crucial para qualquer e-commerce: a capacidade de prever proativamente a insatisfação do cliente. Utilizando o dataset público de E-commerce da Olist, foi desenvolvido um pipeline completo que abrange desde a limpeza dos dados brutos até o treino e implantação de um modelo de classificação.
+O dataset utilizado é o **Brazilian E-commerce Public Dataset by Olist**, disponível no Kaggle. Ele contém informações reais de 100 mil pedidos feitos em diversas lojas da Olist.
 
-O projeto evoluiu para incorporar técnicas avançadas como Processamento de Linguagem Natural (NLP) e reamostragem (SMOTE) para resolver o desafio do desbalanceamento de classes, focando em maximizar a deteção de clientes em risco. O objetivo final é disponibilizar uma ferramenta prática e precisa através de uma API RESTful e uma interface de utilizador intuitiva.
+### Pipeline de Dados
 
-✨ Funcionalidades
+Transformar os **dados brutos** de diversas tabelas relacionais do Olist em um formato padronizado e limpo, pronto para a modelagem. O dataset original é composto por informações detalhadas sobre pedidos, avaliações, itens de pedido, produtos e clientes.
 
-    Pipeline de Dados Automatizado: Um script (Pipeline_dados.py) que extrai, limpa, transforma e prepara os dados para modelagem.
+Para a construção do dataset final, as seguintes **variáveis (features)** foram selecionadas e preparadas:
 
-    Engenharia de Atributos Avançada com NLP: O pipeline de dados foi aprimorado para incluir e processar os comentários de texto das avaliações, transformando-os em features valiosas para o modelo.
+* **`price`**: O valor monetário do produto no pedido.
+* **`freight_value`**: O custo do frete associado ao pedido.
+* **`customer_state`**: O estado geográfico do cliente, uma variável categórica essencial para entender padrões regionais.
+* **`product_category_name`**: A categoria à qual o produto pertence, também uma variável categórica que pode influenciar a satisfação.
+* **`tempo_de_entrega_dias`**: Esta é uma **feature criada por engenharia de atributos**, calculada como a diferença em dias entre a data de compra (`order_purchase_timestamp`) e a data efetiva de entrega ao cliente (`order_delivered_customer_date`). É um preditor fundamental, pois atrasos na entrega frequentemente impactam a satisfação.
 
-    Tratamento de Desbalanceamento com SMOTE: Implementação da técnica de reamostragem SMOTE para criar um conjunto de treino mais balanceado, melhorando drasticamente a capacidade do modelo de identificar a classe minoritária (clientes insatisfeitos).
+A **variável alvo**, **`target_satisfeito`**, é uma classificação **binária** que define a satisfação do cliente. Ela foi derivada da `review_score` (nota de 1 a 5) da seguinte forma:
 
-    Experimentação e Seleção de Modelos por F1-Score: Um pipeline (Pipeline_modelos.py) que treina múltiplos modelos, mas seleciona o "campeão" com base no F1-Score, uma métrica mais robusta que a acurácia para este tipo de problema.
+* Clientes com `review_score` igual a **4 ou 5** são classificados como **Satisfeitos (1)**.
+* Clientes com `review_score` igual a **1, 2 ou 3** são classificados como **Insatisfeitos (0)**.
 
-    API RESTful com FastAPI: Um serviço de API (servico_api.py) que carrega o modelo treinado e expõe endpoints para realizar previsões e popular a interface.
+Essa transformação define o problema como uma **Classificação Binária**. A pipeline de dados também lida com a união das tabelas, tratamento de dados ausentes e a filtragem de registros para garantir a consistência e relevância dos dados para o modelo.
 
-    Interface Web Interativa: Uma página index.html moderna que serve como frontend para a API, com menus de seleção preenchidos dinamicamente.
+## Desbalanceamento dos Dados e Solução
 
-    Execução Simplificada: A API foi configurada para servir a interface e abrir o navegador automaticamente na inicialização.
+Distribuição da variável alvo `target_satisfeito`:
 
-🛠️ Tecnologias Utilizadas
+* **Clientes Satisfeitos (1):** 26.564 registros.
+* **Clientes Insatisfeitos (0):** 13.600 registros.
 
-    Linguagem: Python 3
+Essa diferença caracteriza um **desbalanceamento de classes**, onde a classe "Satisfeito" é a majoritária e a "Insatisfeito" é a minoritária. Em problemas de classificação, modelos podem ter dificuldades em aprender com a classe minoritária se o desbalanceamento não for tratado, levando a previsões enviesadas.
 
-    Manipulação de Dados: Pandas, KaggleHub
+Para mitigar esse problema, foi utilizada a técnica de **pesos de classes (class weights)**. Essa abordagem atribui um peso maior às amostras da classe minoritária durante o treinamento do modelo, forçando-o a dar mais atenção a esses casos. A proporção do peso foi calculada com base na razão do número de amostras entre as classes (`peso_classe_1 = contagem_insatisfeitos / contagem_satisfeitos`).
 
-    Machine Learning: Scikit-learn, XGBoost, LightGBM, Imbalanced-learn (para SMOTE)
+## Lidando com os Comentários dos Produtos (`review_comment_message`)
 
-    API e Servidor Web: FastAPI, Uvicorn
+Os comentários dos produtos são uma fonte rica de informação textual. Para incorporá-los no modelo, foram realizados os seguintes passos:
 
-    Frontend: HTML5, Tailwind CSS, JavaScript
-
-    Serialização de Modelos: Joblib
-
-    Visualização de Dados: Matplotlib, Seaborn
-
-🚀 Configuração e Instalação
-
-Siga os passos abaixo para configurar e executar o projeto no seu ambiente local.
-Pré-requisitos:
-
-    Python 3.8 ou superior
-
-    pip e venv (geralmente incluídos com o Python)
-
-    Visual Studio Code
-
-Passos
-
-    Clone o Repositório (se estiver no Git)
-
-    git clone https://github.com/VitNog21/PipelineESI
-    cd PipelineESI
-
-    Se não estiver usando Git, apenas certifique-se de que todos os ficheiros do projeto estão na mesma pasta.
-
-    Crie e Ative um Ambiente Virtual
-
-    # Criar o ambiente virtual
-    python -m venv venv
-
-    # Ativar no Windows (PowerShell)
-    venv\Scripts\activate
-
-    # Ativar no macOS/Linux
-    source venv/bin/activate
-
-    Instale as Dependências
-    Com o ambiente virtual ativo, instale todas as bibliotecas necessárias a partir do ficheiro requirements.txt.
-
-    pip install -r requirements.txt
-
-▶️ Como Executar o Projeto
-
-É crucial que os scripts sejam executados na ordem correta, pois cada passo gera os ficheiros necessários para o próximo.
-Opção 1: Usando o Debugger do VS Code (Recomendado)
-
-Esta é a forma mais prática e integrada. Com o ficheiro .vscode/launch.json configurado, pode executar cada etapa com um clique.
-
-    Abra a aba de Execução e Depuração:
-
-        Clique no ícone de "Executar e Depurar" na barra lateral esquerda do VS Code (ou pressione Ctrl+Shift+D).
-
-    Selecione e Execute as Configurações na Ordem Correta:
-    No topo da barra lateral, use o menu de seleção para executar cada configuração na seguinte ordem, clicando no botão verde de "play" (▶️):
-
-        1. Executar Pipeline de Dados
-
-        2. Executar Pipeline de Modelagem
-
-        3. Iniciar API e Interface
-
-Opção 2: Usando o Terminal Manualmente
-
-Se preferir não usar o debugger do VS Code, pode executar os comandos diretamente no terminal integrado (com o ambiente virtual ativo).
-
-    Execute o Pipeline de Dados:
-
-    python Pipeline_dados.py
-
-    Execute o Pipeline de Modelagem:
-
-    python Pipeline_modelos.py
-
-    Inicie o Serviço da API e a Interface:
-
-    uvicorn servico_api:app --reload
-
-    (O seu navegador abrirá automaticamente)
+1.  **Tratamento de Nulos:** Valores ausentes (`NaN`) nos comentários foram preenchidos com strings vazias para evitar erros durante o processamento de texto.
+2.  **Vetorização TF-IDF:** A técnica **TF-IDF (Term Frequency-Inverse Document Frequency)** foi aplicada para converter o texto em uma representação numérica. O `TfidfVectorizer` cria vetores numéricos onde cada dimensão representa a importância de uma palavra no contexto de um documento e de todo o corpus de comentários.
+3.  **Stop Words em Português:** Palavras comuns e sem muito significado ("de", "a", "o", "que", "e", etc.), conhecidas como *stop words*, foram removidas do texto antes da vetorização. Para isso, foi utilizada a lista de *stop words* para o idioma **português** fornecida pela biblioteca `NLTK`. Isso ajuda o modelo a focar nas palavras mais relevantes para a satisfação do cliente.
 
 
-👨‍💻 Autores
+## Pipelines Detalhadas do Projeto
 
-Victor Gabriel e Adriane Kelle
+### Pipeline de Modelos: Treinamento Inteligente e Seleção Criteriosa
 
-Este projeto foi desenvolvido como uma demonstração completa de um ciclo de vida de um projeto de Machine Learning, desde a conceção até à implantação e otimização.
+Nesta fase, o foco é construir e validar o modelo preditivo.
+
+* **Preparação dos Dados:** O dataset processado é carregado e dividido em conjuntos de treino e teste, mantendo a proporção das classes (estratificação).
+* **Pré-processamento das Features (`make_column_transformer`):** Um transformador de colunas aplica pré-processamentos específicos:
+    * **Variáveis Categóricas:** `OneHotEncoder` para codificação.
+    * **Variável Textual (`review_comment_message`):** `TfidfVectorizer` com remoção de *stop words* em português.
+    * **Variáveis Numéricas:** `StandardScaler` para padronização.
+* **Experimentação com Modelos:** Uma coleção de modelos candidatos (Regressão Logística, Random Forest, LightGBM, XGBoost) é treinada dentro de pipelines do Scikit-learn, garantindo que o pré-processamento seja aplicado consistentemente. Todos os modelos incorporam os pesos de classes para lidar com o desbalanceamento.
+* **Métrica de Avaliação:** O **F1-Score ponderado** é utilizado como métrica principal para comparar o desempenho dos modelos, sendo ideal para datasets desbalanceados. Relatórios de classificação e matrizes de confusão são gerados para cada modelo.
+* **Seleção e Persistência do Modelo Campeão:** O modelo com o melhor F1-Score ponderado é selecionado como o campeão. O **pipeline completo do modelo campeão** (incluindo o pré-processador e o modelo treinado) é salvo no formato `.joblib`, permitindo sua fácil reutilização.
+
+### Pipeline de Serviço: Deploy e Acessibilidade
+
+Esta pipeline transforma o modelo treinado em um serviço web interativo usando **FastAPI**, permitindo que outras aplicações consumam suas predições em tempo real.
+
+* **Inicialização da API:** A API é configurada com `FastAPI`, incluindo título, descrição e versão. Um evento de `startup` tenta abrir automaticamente a documentação interativa (Swagger UI) no navegador.
+* **Carregamento do Modelo:** O pipeline do modelo campeão (`modelo_campeao.joblib`) é carregado uma única vez na inicialização do serviço para otimizar a performance, com tratamento de erros para garantir a robustez.
+* **Definição dos Modelos de Dados (Pydantic):** `OrderFeatures` e `PredictionOut` definem a estrutura dos dados de entrada e saída, garantindo validação e geração automática de documentação.
+* **Definição dos Endpoints da API:**
+    * **`/` (GET):** Serve um arquivo `index.html` para uma interface de usuário básica.
+    * **`/options` (GET):** Fornece listas únicas de estados e categorias de produtos, extraídas do dataset processado, para preenchimento de formulários em interfaces.
+    * **`/predict` (POST):** O endpoint principal. Recebe os dados de um pedido (incluindo o comentário textual), processa-os através do pipeline do modelo e retorna a predição de satisfação (Satisfeito/Insatisfeito).
+
+
+## Como executar
+* Python 3.8 ou superior
+
+Instale as dependencias:
+
+* pip install -r requirements.txt
+
+Execute a main principal:
+
+* python main.py
+ou 
+* Run and Debug --> Executar Pipeline Completa

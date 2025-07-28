@@ -3,7 +3,6 @@ import os
 import joblib
 import matplotlib.pyplot as plt
 import seaborn as sns
-
 #ferramentas do Scikit-learn
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import OneHotEncoder, StandardScaler
@@ -17,6 +16,10 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.ensemble import RandomForestClassifier
 from lightgbm import LGBMClassifier
 from xgboost import XGBClassifier
+
+import nltk
+from nltk.corpus import stopwords
+portuguese_stopwords = stopwords.words('portuguese')
 
 def run_model_pipeline():
     """
@@ -35,7 +38,6 @@ def run_model_pipeline():
     processed_data_path = os.path.join("output", "dados_processados.csv")
     try:
         df = pd.read_csv(processed_data_path)
-        #Garante que a coluna de comentários seja tratada como string.
         df['review_comment_message'] = df['review_comment_message'].astype(str).fillna('')
     except FileNotFoundError:
         print(f"Erro: Arquivo '{processed_data_path}' não encontrado.")
@@ -73,7 +75,7 @@ def run_model_pipeline():
     
     preprocessor = make_column_transformer(
         (OneHotEncoder(handle_unknown='ignore'), categorical_features),
-        (TfidfVectorizer(max_features=500, stop_words='english'), text_feature),
+        (TfidfVectorizer(max_features=500, stop_words=portuguese_stopwords), text_feature),
         (StandardScaler(), numerical_features),
         remainder='passthrough'
     )
@@ -131,7 +133,7 @@ def run_model_pipeline():
         plt.close()
         print(f"Matriz de confusão salva em: {confusion_matrix_path}")
     
-    # SELEÇÃO E PERSISTÊNCIA DO MODELO CAMPEÃO
+    #SELEÇÃO E PERSISTÊNCIA DO MODELO CAMPEÃO
     champion_model_name = max(results, key=lambda k: results[k]['f1_score'])
     champion_pipeline = results[champion_model_name]['pipeline']
     champion_f1 = results[champion_model_name]['f1_score']
@@ -160,4 +162,5 @@ def run_model_pipeline():
     print(f"\nModelo campeão salvo com sucesso em: {model_path}")
 
 if __name__ == "__main__":
+    nltk.download('stopwords')
     run_model_pipeline()

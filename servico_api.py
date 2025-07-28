@@ -1,5 +1,3 @@
-# ARQUIVO: api.py (VERSÃO ATUALIZADA)
-
 import joblib
 import pandas as pd
 from fastapi import FastAPI, HTTPException
@@ -40,8 +38,6 @@ class OrderFeatures(BaseModel):
     customer_state: str = Field(..., example="SP")
     product_category_name: str = Field(..., example="cama_mesa_banho")
     tempo_de_entrega_dias: int = Field(..., example=10)
-    # ===== CAMPO ADICIONADO =====
-    # Adicionamos o campo para o comentário, com uma string vazia como padrão.
     review_comment_message: str = Field("", example="Gostei muito do produto, entrega rápida!")
 
 class PredictionOut(BaseModel):
@@ -49,7 +45,6 @@ class PredictionOut(BaseModel):
     previsao: str = Field(..., example="Satisfeito")
 
 #DEFINIÇÃO DOS ENDPOINTS DA API
-
 @app.get("/", response_class=FileResponse)
 def read_root():
     """Serve a interface do usuário (arquivo index.html)."""
@@ -84,12 +79,8 @@ def predict(features: OrderFeatures):
     if model is None:
         raise HTTPException(status_code=503, detail="Modelo não está disponível.")
     try:
-        # ===== LÓGICA ATUALIZADA =====
-        # Agora criamos o DataFrame diretamente do dicionário de features.
-        # O campo 'review_comment_message' já virá preenchido pelo usuário.
-        input_data = pd.DataFrame([features.dict()])
         
-        # A linha 'input_data['review_comment_message'] = ''' foi REMOVIDA.
+        input_data = pd.DataFrame([features.dict()])
         
         prediction_class = model.predict(input_data)[0]
         prediction_label = "Satisfeito" if prediction_class == 1 else "Insatisfeito"

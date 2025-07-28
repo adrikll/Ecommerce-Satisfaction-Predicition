@@ -12,7 +12,6 @@ def run_data_pipeline():
     """
     print("Iniciando Módulo de Pipeline de Dados...")
     
-    # --------------------------------------------------------------------------
     '''
     EXTRAÇÃO
       Racional: O primeiro passo é obter os dados brutos da fonte.
@@ -20,7 +19,6 @@ def run_data_pipeline():
       reprodutibilidade e evitando o download manual. Um bloco try-except
       captura possíveis falhas de conexão ou autenticação.
     '''
-    # --------------------------------------------------------------------------
     
     print("Baixando os dados do Kaggle (olistbr/brazilian-ecommerce)...")
     try:
@@ -31,14 +29,12 @@ def run_data_pipeline():
         print(f"Erro crítico no download: {e}")
         return
     
-    # --------------------------------------------------------------------------
     '''
     CARGA INICIAL
     Racional: Carregamos os datasets essenciais para o problema em DataFrames
     do pandas. A seleção dos arquivos é baseada na necessidade de conectar
     informações do pedido, cliente, produto, itens do pedido e avaliação.
     '''
-    # --------------------------------------------------------------------------
     print("Carregando datasets principais...")
     try:
         orders = pd.read_csv(os.path.join(path, "olist_orders_dataset.csv"))
@@ -50,7 +46,6 @@ def run_data_pipeline():
         print(f"Erro ao carregar arquivo: {e}. Verifique o caminho e o resultado do download.")
         return
 
-    # --------------------------------------------------------------------------
     '''
     TRANSFORMAÇÃO
     Racional: Esta é a fase central, onde os dados brutos são convertidos
