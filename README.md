@@ -70,7 +70,7 @@ Passos
     python -m venv venv
 
     # Ativar no Windows (PowerShell)
-    .\venv\Scripts\Activate.ps1
+    venv\Scripts\activate
 
     # Ativar no macOS/Linux
     source venv/bin/activate

@@ -1,4 +1,3 @@
-# Importação das bibliotecas necessárias
 import joblib
 import pandas as pd
 from fastapi import FastAPI, HTTPException
@@ -6,18 +5,14 @@ from pydantic import BaseModel, Field
 import webbrowser
 from fastapi.responses import FileResponse, JSONResponse 
 
-# --------------------------------------------------------------------------
-# 1. INICIALIZAÇÃO DA API 
-# --------------------------------------------------------------------------
+#INICIALIZAÇÃO DA API 
 app = FastAPI(
     title="API de Predição de Satisfação do Cliente",
     description="Serviço que utiliza um modelo de Machine Learning para prever a satisfação do cliente.",
     version="2.2.1" # Versão com correção de bug
 )
 
-# --------------------------------------------------------------------------
-# Função para abrir o navegador 
-# --------------------------------------------------------------------------
+#Função para abrir o navegador 
 @app.on_event("startup")
 def open_browser_on_startup():
     try:
@@ -25,9 +20,7 @@ def open_browser_on_startup():
     except Exception as e:
         print(f"Não foi possível abrir o navegador automaticamente: {e}")
 
-# --------------------------------------------------------------------------
-# 2. CARREGAMENTO DO MODELO 
-# --------------------------------------------------------------------------
+#CARREGAMENTO DO MODELO 
 try:
     model = joblib.load("output/modelo_campeao.joblib")
     print("Modelo carregado com sucesso.")
@@ -38,9 +31,7 @@ except Exception as e:
     print(f"Ocorreu um erro ao carregar o modelo: {e}")
     model = None
 
-# --------------------------------------------------------------------------
-# 3. DEFINIÇÃO DOS MODELOS DE DADOS 
-# --------------------------------------------------------------------------
+#DEFINIÇÃO DOS MODELOS DE DADOS 
 class OrderFeatures(BaseModel):
     price: float = Field(..., example=129.90)
     freight_value: float = Field(..., example=22.50)
@@ -52,9 +43,7 @@ class PredictionOut(BaseModel):
     classe_predita: int = Field(..., example=1)
     previsao: str = Field(..., example="Satisfeito")
 
-# --------------------------------------------------------------------------
-# 4. DEFINIÇÃO DOS ENDPOINTS DA API
-# --------------------------------------------------------------------------
+#DEFINIÇÃO DOS ENDPOINTS DA API
 
 @app.get("/", response_class=FileResponse)
 def read_root():
