@@ -32,7 +32,6 @@
                 <input type="number" id="freight_value" name="freight_value" step="0.01" required class="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition" placeholder="Ex: 22.50">
             </div>
             
-            <!-- CAMPO DE ESTADO ATUALIZADO PARA SELECT -->
             <div>
                 <label for="customer_state" class="block text-sm font-medium text-slate-600 mb-1">Estado do Cliente</label>
                 <select id="customer_state" name="customer_state" required class="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition bg-white">
@@ -40,7 +39,6 @@
                 </select>
             </div>
 
-            <!-- CAMPO DE CATEGORIA ATUALIZADO PARA SELECT -->
             <div>
                 <label for="product_category_name" class="block text-sm font-medium text-slate-600 mb-1">Categoria do Produto</label>
                 <select id="product_category_name" name="product_category_name" required class="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition bg-white">
@@ -52,7 +50,16 @@
                 <label for="tempo_de_entrega_dias" class="block text-sm font-medium text-slate-600 mb-1">Tempo de Entrega (dias)</label>
                 <input type="number" id="tempo_de_entrega_dias" name="tempo_de_entrega_dias" required class="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition" placeholder="Ex: 10">
             </div>
-            
+
+            <div>
+                <label for="review_comment_message" class="block text-sm font-medium text-slate-600 mb-1">Comentário</label>
+                <textarea 
+                    id="review_comment_message" 
+                    name="review_comment_message" 
+                    rows="3" 
+                    class="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition" 
+                    placeholder="Ex: Gostei muito do produto, entrega rápida!"></textarea>
+            </div>
             <button type="submit" id="submit-button" class="w-full bg-blue-600 text-white p-4 rounded-lg font-semibold text-lg hover:bg-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-300 transition-all duration-300 flex items-center justify-center space-x-2">
                 <span id="button-text">Prever Satisfação</span>
                 <div id="loader" class="loader hidden"></div>
@@ -77,21 +84,18 @@
         const resultTitle = document.getElementById('result-title');
         const resultDescription = document.getElementById('result-description');
         
-        // --- NOVO SCRIPT PARA CARREGAR OS DROPDOWNS ---
-        // Executa assim que o conteúdo da página estiver pronto
+        // Carrega os dropdowns dinamicamente
         document.addEventListener('DOMContentLoaded', async function() {
             const stateSelect = document.getElementById('customer_state');
             const categorySelect = document.getElementById('product_category_name');
 
             try {
-                // Busca as opções na nossa API
                 const response = await fetch('http://127.0.0.1:8000/options');
                 if (!response.ok) {
                     throw new Error('Falha ao carregar opções da API.');
                 }
                 const options = await response.json();
 
-                // Preenche o dropdown de estados
                 stateSelect.innerHTML = '<option value="" disabled selected>Selecione um estado</option>';
                 options.states.forEach(state => {
                     const option = document.createElement('option');
@@ -100,12 +104,11 @@
                     stateSelect.appendChild(option);
                 });
 
-                // Preenche o dropdown de categorias
                 categorySelect.innerHTML = '<option value="" disabled selected>Selecione uma categoria</option>';
                 options.categories.forEach(category => {
                     const option = document.createElement('option');
                     option.value = category;
-                    option.textContent = category.replace(/_/g, ' '); // Melhora a legibilidade
+                    option.textContent = category.replace(/_/g, ' ');
                     categorySelect.appendChild(option);
                 });
 
@@ -116,14 +119,18 @@
             }
         });
 
-
+        // Lida com o envio do formulário
         form.addEventListener('submit', async function(event) {
             event.preventDefault();
             const formData = new FormData(form);
             const data = Object.fromEntries(formData.entries());
+            
+            // Converte os tipos de dados necessários
             data.price = parseFloat(data.price);
             data.freight_value = parseFloat(data.freight_value);
             data.tempo_de_entrega_dias = parseInt(data.tempo_de_entrega_dias);
+            
+            // O campo 'review_comment_message' já é uma string e será incluído automaticamente.
 
             buttonText.textContent = 'Processando...';
             loader.classList.remove('hidden');

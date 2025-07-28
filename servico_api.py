@@ -1,3 +1,5 @@
+# ARQUIVO: api.py (VERSÃO ATUALIZADA)
+
 import joblib
 import pandas as pd
 from fastapi import FastAPI, HTTPException
@@ -8,8 +10,8 @@ from fastapi.responses import FileResponse, JSONResponse
 #INICIALIZAÇÃO DA API 
 app = FastAPI(
     title="API de Predição de Satisfação do Cliente",
-    description="Serviço que utiliza um modelo de Machine Learning para prever a satisfação do cliente.",
-    version="2.2.1" # Versão com correção de bug
+    description="Serviço que utiliza um modelo de Machine Learning para prever a satisfação do cliente, incluindo análise de comentários.",
+    version="2.3.0" # Nova versão com suporte a comentários
 )
 
 #Função para abrir o navegador 
@@ -38,6 +40,9 @@ class OrderFeatures(BaseModel):
     customer_state: str = Field(..., example="SP")
     product_category_name: str = Field(..., example="cama_mesa_banho")
     tempo_de_entrega_dias: int = Field(..., example=10)
+    # ===== CAMPO ADICIONADO =====
+    # Adicionamos o campo para o comentário, com uma string vazia como padrão.
+    review_comment_message: str = Field("", example="Gostei muito do produto, entrega rápida!")
 
 class PredictionOut(BaseModel):
     classe_predita: int = Field(..., example=1)
@@ -74,13 +79,18 @@ def get_options():
 @app.post("/predict", response_model=PredictionOut)
 def predict(features: OrderFeatures):
     """
-    Recebe os dados de um pedido e retorna a predição de satisfação.
+    Recebe os dados de um pedido, incluindo o comentário, e retorna a predição de satisfação.
     """
     if model is None:
         raise HTTPException(status_code=503, detail="Modelo não está disponível.")
     try:
+        # ===== LÓGICA ATUALIZADA =====
+        # Agora criamos o DataFrame diretamente do dicionário de features.
+        # O campo 'review_comment_message' já virá preenchido pelo usuário.
         input_data = pd.DataFrame([features.dict()])
-        input_data['review_comment_message'] = ''       
+        
+        # A linha 'input_data['review_comment_message'] = ''' foi REMOVIDA.
+        
         prediction_class = model.predict(input_data)[0]
         prediction_label = "Satisfeito" if prediction_class == 1 else "Insatisfeito"
         return PredictionOut(classe_predita=int(prediction_class), previsao=prediction_label)
